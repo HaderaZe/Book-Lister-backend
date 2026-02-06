@@ -2,9 +2,6 @@
 import { bookResolvers } from './bookResolvers';
 import { authResolvers } from './authResolvers';
 
-// Provide default if Book is undefined
-const bookTypeResolvers = bookResolvers.Book || {};
-
 export const resolvers = {
   Query: {
     ...bookResolvers.Query,
@@ -14,5 +11,5 @@ export const resolvers = {
     ...bookResolvers.Mutation,
     ...authResolvers.Mutation,
   },
-  Book: bookTypeResolvers,
+  Book: {}, // Just add empty Book object
 };

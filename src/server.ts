@@ -1,3 +1,4 @@
+// src/server.ts
 import express from 'express';
 import { ApolloServer } from 'apollo-server-express';
 import cors from 'cors';
@@ -9,10 +10,10 @@ import { getUserFromToken } from './utils/auth';
 
 dotenv.config();
 
-const app = express();
+const app: express.Application = express(); // Add type annotation
 const PORT = process.env.PORT || 4000;
 
-// CORS configuration for production
+// CORS configuration
 const corsOptions = {
   origin: process.env.FRONTEND_URL || '*',
   credentials: true,
@@ -21,7 +22,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-app.get('/', (req, res) => {
+app.get('/', (req: express.Request, res: express.Response) => {
   res.json({ 
     status: 'OK', 
     message: 'Book Lister API is running',
@@ -32,7 +33,7 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/health', (req, res) => {
+app.get('/health', (req: express.Request, res: express.Response) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
@@ -42,11 +43,11 @@ const startServer = async () => {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    context: ({ req }) => {
+    context: ({ req }: { req: express.Request }) => {
       const user = getUserFromToken(req.headers.authorization);
       return { req, user };
     },
-    introspection: true, // Enable for production
+    introspection: true,
     formatError: (error) => {
       console.error('GraphQL Error:', error);
       return {
@@ -57,10 +58,12 @@ const startServer = async () => {
   });
 
   await server.start();
+  
+  // FIX: Add type assertion to fix the TypeScript error
   server.applyMiddleware({ 
-    app, 
+    app: app as any, // <-- Add 'as any' type assertion here
     path: '/graphql',
-    cors: false // We're handling CORS above
+    cors: false
   });
 
   app.listen(PORT, () => {
@@ -74,16 +77,4 @@ startServer().catch((error) => {
   process.exit(1);
 });
 
-export default app; // Export for Vercel
-// ```
-
-// ### Step 3: Set Up MongoDB Atlas (If Not Done)
-
-// 1. Go to https://www.mongodb.com/cloud/atlas
-// 2. Create a **free cluster** (M0)
-// 3. Create a **database user**
-// 4. **Whitelist all IPs**: `0.0.0.0/0` (Network Access)
-// 5. Get your **connection string**:
-// ```
-//    mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/book-lister?retryWrites=true&w=majority
-//mongodb+srv://booklister-admin:WebApp@26@booklister-cluster.hx2eo26.mongodb.net/?appName=BookLister-Cluster
+export default app;
